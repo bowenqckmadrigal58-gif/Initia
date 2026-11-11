@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chess_board/flutter_chess_board.dart';
-import 'package:stockfish/stockfish.dart';
+import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
+import 'package:chess/chess.dart' as chessLib;
 
 void main() => runApp(const InitiaApp());
 
@@ -32,16 +32,7 @@ class ChessGameScreen extends StatefulWidget {
 }
 
 class _ChessGameScreenState extends State<ChessGameScreen> {
-  ChessBoardController controller = ChessBoardController();
-  late Stockfish stockfish;
-
-  @override
-  void initState() {
-    super.initState();
-    stockfish = Stockfish();
-    stockfish.stdin = 'uci\n';
-    stockfish.stdin = 'setoption name Skill Level value 20\n';
-  }
+  final chessLib.Chess _chess = chessLib.Chess();
 
   @override
   Widget build(BuildContext context) {
@@ -60,14 +51,42 @@ class _ChessGameScreenState extends State<ChessGameScreen> {
         children: [
           Expanded(
             child: Center(
-              child: ChessBoard(
-                controller: controller,
-                boardColor: BoardColor.darkBrown,
-                boardOrientation: PlayerColor.white,
-                onMove: () {
-                  stockfish.stdin = 'position fen ${controller.getFen()}\n';
-                  stockfish.stdin = 'go movetime 1000\n';
-                },
+              child: Container(
+                margin: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF262421),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: AspectRatio(
+                  aspectRatio: 1.0,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 8,
+                    ),
+                    itemCount: 64,
+                    itemBuilder: (context, index) {
+                      int row = index ~/ 8;
+                      int col = index % 8;
+                      bool isLight = (row + col) % 2 == 0;
+                      return Container(
+                        color: isLight 
+                            ? const Color(0xFFEEEED2) 
+                            : const Color(0xFF769656),
+                        child: Center(
+                          child: Text(
+                            '${String.fromCharCode(97 + col)}${8 - row}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.black.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
           ),
@@ -81,9 +100,16 @@ class _ChessGameScreenState extends State<ChessGameScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () => controller.resetBoard(),
+              onPressed: () {
+                setState(() {
+                  _chess.reset();
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('بازی جدید آغاز شد - ابتکار عمل در دست شماست')),
+                );
+              },
               child: const Text(
-                'بازی جدید',
+                'بازی جدید (ابتکار عمل)',
                 style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
